@@ -14,13 +14,6 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { Response } from 'express';
 import sendToken from './sendToken';
 
-export interface JwtPayload {
-  id: number;
-  email: string;
-  username: string;
-  sub: number;
-}
-
 @Injectable()
 export class AuthService {
   constructor(
@@ -88,34 +81,6 @@ export class AuthService {
 
     // Use sendToken utility
     sendToken(user, 200, response, this.jwtService, 'Login successful');
-  }
-
-  // Get current user data
-  async getMe(
-    user: JwtPayload,
-  ): Promise<{ success: boolean; data: any; message: string }> {
-    const userData = await this.databaseService.superUser.findUnique({
-      where: { id: user.id },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        isVerified: true,
-        createdAt: true,
-        updatedAt: true,
-        // Add any other fields you want to return, but exclude password
-      },
-    });
-
-    if (!userData) {
-      throw new NotFoundException('User not found');
-    }
-
-    return {
-      success: true,
-      data: userData,
-      message: 'User data retrieved successfully',
-    };
   }
 
   // Get OTP
