@@ -1,0 +1,263 @@
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { DatabaseService } from 'src/database/database.service';
+import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
+import { generateOTP } from './auth.helper';
+import { MailerService } from '@nestjs-modules/mailer';
+import { Response } from 'express';
+import sendToken from './sendToken';
+
+@Injectable()
+export class AuthService {
+  constructor(
+    private readonly databaseService: DatabaseService,
+    private readonly jwtService: JwtService,
+    private readonly mailerService: MailerService,
+  ) {}
+
+  // Sign up
+  async signUp(
+    createAuthDto: Prisma.superUserCreateInput,
+  ): Promise<{ success: boolean; data: any; message: string }> {
+    const existingUser = await this.databaseService.superUser.findUnique({
+      where: { email: createAuthDto.email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('User already exist');
+    }
+
+    const saltRound = 12;
+    const hashedPassword = await bcrypt.hash(createAuthDto.password, saltRound);
+
+    const user = await this.databaseService.superUser.create({
+      data: {
+        ...createAuthDto,
+        password: hashedPassword,
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        isVerified: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return {
+      success: true,
+      data: user,
+      message: 'User created successfully',
+    };
+  }
+
+  // Login
+  async login(
+    email: string,
+    password: string,
+    response: Response,
+  ): Promise<void> {
+    const user = await this.databaseService.superUser.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    // Use sendToken utility
+    sendToken(user, 200, response, this.jwtService, 'Login successful');
+  }
+
+  // Get OTP
+  async getOtp(
+    email: string,
+  ): Promise<{ success: boolean; message: string; email: string }> {
+    const user = await this.databaseService.superUser.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User does not exist');
+    }
+
+    const otp = generateOTP();
+    const otpExpiry = new Date(Date.now() + 30 * 60 * 1000);
+
+    await this.databaseService.superUser.update({
+      where: { email },
+      data: {
+        otp,
+        otpExpiry,
+      },
+    });
+
+    try {
+      await this.mailerService.sendMail({
+        from: 'MadHouse Admin <4tlifee@gmail.com>',
+        to: email,
+        subject: 'MadHouse Admin - Password Reset OTP',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">MadHouse Admin Account Password Reset Request</h2>
+            <p>You have requested to reset your password. Please use the following OTP to proceed:</p>
+            <div style="background-color: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0;">
+              <h1 style="color: #007bff; font-size: 32px; letter-spacing: 8px; margin: 0;">${otp}</h1>
+            </div>
+            <p><strong>This OTP is valid for 1 minutes only.</strong></p>
+            <p>If you didn't request this password reset, please ignore this email.</p>
+            <hr style="margin: 30px 0;">
+            <p style="color: #666; font-size: 12px;">This is an automated message, please do not reply.</p>
+          </div>
+        `,
+      });
+
+      return {
+        success: true,
+        message: 'OTP sent successfully to your email',
+        email,
+      };
+    } catch (error) {
+      await this.databaseService.superUser.update({
+        where: { email },
+        data: {
+          otp: null,
+          otpExpiry: null,
+        },
+      });
+
+      console.error(error);
+      throw new BadRequestException('Failed to send email. Please try again.');
+    }
+  }
+
+  // Verify OTP
+  async verifyOtp(
+    email: string,
+    otp: string,
+  ): Promise<{ success: boolean; message: string; email: string }> {
+    const user = await this.databaseService.superUser.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.otp || !user.otpExpiry) {
+      throw new BadRequestException('No OTP found. Please request a new one.');
+    }
+
+    if (user.otp !== otp) {
+      throw new BadRequestException('Invalid OTP');
+    }
+
+    if (new Date() > user.otpExpiry) {
+      await this.databaseService.superUser.update({
+        where: { email },
+        data: {
+          otp: null,
+          otpExpiry: null,
+          isVerified: true,
+        },
+      });
+
+      throw new BadRequestException(
+        'OTP has expired. Please request a new one.',
+      );
+    }
+
+    return {
+      success: true,
+      message: 'OTP verified successfully. You can now reset your password.',
+      email,
+    };
+  }
+
+  // Reset password
+  async resetPassword(
+    email: string,
+    otp: string,
+    newPassword: string,
+  ): Promise<{ success: boolean; message: string }> {
+    const user = await this.databaseService.superUser.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.otp || !user.otpExpiry) {
+      throw new BadRequestException('No OTP found. Please request a new one.');
+    }
+
+    if (user.otp !== otp) {
+      throw new BadRequestException('Invalid OTP');
+    }
+
+    if (new Date() > user.otpExpiry) {
+      await this.databaseService.superUser.update({
+        where: { email },
+        data: {
+          otp: null,
+          otpExpiry: null,
+        },
+      });
+
+      throw new BadRequestException(
+        'OTP has expired. Please request a new one.',
+      );
+    }
+
+    const saltRound = 12;
+    const hashedPassword = await bcrypt.hash(newPassword, saltRound);
+
+    await this.databaseService.superUser.update({
+      where: { email },
+      data: {
+        password: hashedPassword,
+        otp: null,
+        otpExpiry: null,
+        isVerified: true,
+      },
+    });
+
+    return {
+      success: true,
+      message:
+        'Password reset successfully. You can now login with your new password.',
+    };
+  }
+
+  // Logout
+  logout(response: Response): { success: boolean; message: string } {
+    console.log('Logout request received');
+
+    response.cookie('token', '', {
+      expires: new Date(0),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+    });
+
+    return {
+      success: true,
+      message: 'Logged out successfully',
+    };
+  }
+}
