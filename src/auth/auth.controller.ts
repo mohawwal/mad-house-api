@@ -1,10 +1,7 @@
-import { Controller, Post, Body, Res, Get, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Prisma } from '@prisma/client';
 import type { Response } from 'express';
-import { JwtAuthGuard } from './jwt.auth.guard';
-import { User } from './user.decorator';
-import type { AuthenticatedUser } from './auth.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -58,9 +55,9 @@ export class AuthController {
     return this.authService.logout(response);
   }
 
-  @Get('me')
-  @UseGuards(JwtAuthGuard)
-  getMe(@User() user: AuthenticatedUser) {
-    return this.authService.getMe(user.id);
-  }
+  // @Get('me')
+  // @UseGuards(JwtAuthGuard)
+  // getMe(@User() user: AuthenticatedUser) {
+  //   return this.authService.getMe(user.id);
+  // }
 }
