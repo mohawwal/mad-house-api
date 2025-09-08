@@ -260,31 +260,4 @@ export class AuthService {
       message: 'Logged out successfully',
     };
   }
-
-  // // Get current user profile
-  // async getMe(
-  //   userId: number,
-  // ): Promise<{ success: boolean; data: any; message: string }> {
-  //   const user = await this.databaseService.superUser.findUnique({
-  //     where: { id: userId },
-  //     select: {
-  //       id: true,
-  //       username: true,
-  //       email: true,
-  //       isVerified: true,
-  //       createdAt: true,
-  //       updatedAt: true,
-  //     },
-  //   });
-
-  //   if (!user) {
-  //     throw new NotFoundException('User not found');
-  //   }
-
-  //   return {
-  //     success: true,
-  //     data: user,
-  //     message: 'User profile retrieved successfully',
-  //   };
-  // }
 }
