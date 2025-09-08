@@ -4,8 +4,6 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { DatabaseModule } from './database/database.module';
 import { EventsModule } from './events/events.module';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { MulterModule } from '@nestjs/platform-express';
@@ -15,18 +13,6 @@ import { MulterModule } from '@nestjs/platform-express';
     AuthModule,
     DatabaseModule,
     EventsModule,
-    ThrottlerModule.forRoot([
-      {
-        name: 'short',
-        ttl: 1000,
-        limit: 3,
-      },
-      {
-        name: 'long',
-        ttl: 60000,
-        limit: 100,
-      },
-    ]),
     CloudinaryModule,
     MulterModule.register({
       limits: {
@@ -42,10 +28,6 @@ import { MulterModule } from '@nestjs/platform-express';
     }),
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
-    CloudinaryService,
-  ],
+  providers: [AppService, CloudinaryService],
 })
 export class AppModule {}

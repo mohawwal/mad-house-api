@@ -22,7 +22,6 @@ const sendToken = (
     sub: user.id,
   };
 
-  // Generate single token (like your Node.js version)
   const token = jwtService.sign(payload, {
     expiresIn: process.env.EXPIRES_TIME || '7d',
     secret: process.env.JWT_SECRET,
@@ -31,7 +30,6 @@ const sendToken = (
   const tokenMs = parseTimeToMs(process.env.EXPIRES_TIME || '7d');
   const tokenExpires = new Date(Date.now() + tokenMs);
 
-  // Cookie options
   const cookieOptions = {
     expires: tokenExpires,
     httpOnly: true,
@@ -39,7 +37,6 @@ const sendToken = (
     path: '/',
   };
 
-  // Set single cookie
   res.cookie('token', token, cookieOptions);
 
   res.status(statusCode).json({

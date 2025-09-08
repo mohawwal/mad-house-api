@@ -1,8 +1,19 @@
-import { Controller, Post, Body, Res } from '@nestjs/common';
+import { Controller, Post, Body, Res, Get, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Prisma } from '@prisma/client';
 import type { Response } from 'express';
+import { AuthGuard } from './auth.guards';
+import { User } from './user.decorator';
 
+interface JwtPayload {
+  id: number;
+  email: string;
+  username: string;
+  isVerified: boolean;
+  sub: number;
+  iat?: number;
+  exp?: number;
+}
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -55,9 +66,23 @@ export class AuthController {
     return this.authService.logout(response);
   }
 
-  // @Get('me')
-  // @UseGuards(JwtAuthGuard)
-  // getMe(@User() user: AuthenticatedUser) {
-  //   return this.authService.getMe(user.id);
-  // }
+  @Get()
+  getProtectedResource() {
+    return { message: 'This is a protected resource' };
+  }
+
+  @Get('me')
+  @UseGuards(AuthGuard)
+  getMe(@User() user: JwtPayload) {
+    return {
+      success: true,
+      data: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        isVerified: user.isVerified,
+      },
+      message: 'User profile retrieved successfully',
+    };
+  }
 }
