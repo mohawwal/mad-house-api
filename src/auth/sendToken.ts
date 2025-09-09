@@ -36,7 +36,6 @@ const sendToken = (
     expires: tokenExpires,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    path: '/',
   };
 
   res.cookie('token', token, cookieOptions);
