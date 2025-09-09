@@ -1,6 +1,7 @@
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
 import { parseTimeToMs } from './auth.helper';
+import type { CookieOptions } from 'express';
 
 interface User {
   id: number;
@@ -32,10 +33,15 @@ const sendToken = (
   const tokenMs = parseTimeToMs(process.env.EXPIRES_TIME || '7d');
   const tokenExpires = new Date(Date.now() + tokenMs);
 
-  const cookieOptions = {
+  const sameSite: CookieOptions['sameSite'] =
+    process.env.NODE_ENV === 'production' ? 'none' : 'lax';
+
+  const cookieOptions: CookieOptions = {
     expires: tokenExpires,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
+    sameSite,
+    path: '/',
   };
 
   res.cookie('token', token, cookieOptions);
