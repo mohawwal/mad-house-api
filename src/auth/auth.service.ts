@@ -16,6 +16,25 @@ import sendToken from './sendToken';
 
 @Injectable()
 export class AuthService {
+  //might take you out
+  async findById(id: number): Promise<{
+    id: number;
+    email: string;
+    username: string;
+    isVerified: boolean;
+  } | null> {
+    const user = await this.databaseService.superUser.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        username: true,
+        isVerified: true,
+      },
+    });
+    return user;
+  }
+
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly jwtService: JwtService,

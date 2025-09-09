@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Res, Get, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Res,
+  Get,
+  UseGuards,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Prisma } from '@prisma/client';
 import type { Response } from 'express';
@@ -66,9 +74,28 @@ export class AuthController {
     return this.authService.logout(response);
   }
 
+  // @Get('me')
+  // @UseGuards(AuthGuard)
+  // getMe(@User() user: JwtPayload) {
+  //   return {
+  //     success: true,
+  //     data: {
+  //       id: user.id,
+  //       email: user.email,
+  //       username: user.username,
+  //       isVerified: user.isVerified,
+  //     },
+  //   };
+  // }
   @Get('me')
   @UseGuards(AuthGuard)
-  getMe(@User() user: JwtPayload) {
+  async getMe(@User() payload: JwtPayload) {
+    const user = await this.authService.findById(payload.id);
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
     return {
       success: true,
       data: {
