@@ -33,14 +33,11 @@ const sendToken = (
   const tokenMs = parseTimeToMs(process.env.EXPIRES_TIME || '7d');
   const tokenExpires = new Date(Date.now() + tokenMs);
 
-  const sameSite: CookieOptions['sameSite'] =
-    process.env.NODE_ENV === 'production' ? 'none' : 'lax';
-
   const cookieOptions: CookieOptions = {
     expires: tokenExpires,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite,
+    sameSite: 'none',
     path: '/',
   };
 
