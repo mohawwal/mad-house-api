@@ -118,7 +118,7 @@ export class AuthService {
             <div style="background-color: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0;">
               <h1 style="color: #007bff; font-size: 32px; letter-spacing: 8px; margin: 0;">${otp}</h1>
             </div>
-            <p><strong>This OTP is valid for 1 minutes only.</strong></p>
+            <p><strong>This OTP is valid for 30 minutes only.</strong></p>
             <p>If you didn't request this password reset, please ignore this email.</p>
             <hr style="margin: 30px 0;">
             <p style="color: #666; font-size: 12px;">This is an automated message, please do not reply.</p>
@@ -172,7 +172,6 @@ export class AuthService {
         data: {
           otp: null,
           otpExpiry: null,
-          isVerified: true,
         },
       });
 
@@ -181,9 +180,18 @@ export class AuthService {
       );
     }
 
+    await this.databaseService.superUser.update({
+      where: { email },
+      data: {
+        otp: null,
+        otpExpiry: null,
+        isVerified: true,
+      },
+    });
+
     return {
       success: true,
-      message: 'OTP verified successfully. You can now reset your password.',
+      message: 'OTP verified successfully. Your account is now verified.',
       email,
     };
   }

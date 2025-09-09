@@ -9,16 +9,20 @@ import {
   Query,
   UseInterceptors,
   UploadedFile,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { EventsService } from './events.service';
 import { Prisma } from '@prisma/client';
+import { IsVerifiedGuard } from './isVerified.guard';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
   @Post()
+  @UseGuards(AuthGuard, IsVerifiedGuard)
   @UseInterceptors(FileInterceptor('image'))
   async create(
     @Body() createEventDto: Omit<Prisma.EventCreateInput, 'image'>,
@@ -41,6 +45,7 @@ export class EventsController {
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard, IsVerifiedGuard)
   update(
     @Param('id') id: string,
     @Body() updateEventDto: Prisma.EventCreateInput,
@@ -49,6 +54,7 @@ export class EventsController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard, IsVerifiedGuard)
   remove(@Param('id') id: string) {
     return this.eventsService.remove(+id);
   }

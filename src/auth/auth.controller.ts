@@ -2,7 +2,7 @@ import { Controller, Post, Body, Res, Get, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Prisma } from '@prisma/client';
 import type { Response } from 'express';
-import { AuthGuard } from './auth.guards';
+import { AuthGuard } from './auth.guard';
 import { User } from './user.decorator';
 
 interface JwtPayload {
@@ -66,11 +66,6 @@ export class AuthController {
     return this.authService.logout(response);
   }
 
-  @Get()
-  getProtectedResource() {
-    return { message: 'This is a protected resource' };
-  }
-
   @Get('me')
   @UseGuards(AuthGuard)
   getMe(@User() user: JwtPayload) {
@@ -82,7 +77,6 @@ export class AuthController {
         username: user.username,
         isVerified: user.isVerified,
       },
-      message: 'User profile retrieved successfully',
     };
   }
 }

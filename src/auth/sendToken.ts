@@ -6,6 +6,7 @@ interface User {
   id: number;
   email: string;
   username: string;
+  isVerified: boolean;
 }
 
 const sendToken = (
@@ -19,6 +20,7 @@ const sendToken = (
     id: user.id,
     email: user.email,
     username: user.username,
+    isVerified: user.isVerified,
     sub: user.id,
   };
 
@@ -46,6 +48,7 @@ const sendToken = (
       id: user.id,
       email: user.email,
       username: user.username,
+      isVerified: user.isVerified,
     },
     message,
   });
