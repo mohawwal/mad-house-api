@@ -39,7 +39,7 @@ model Event {
   image       String?
   photoLink   String?
   ticketLink  String?
-  startDate   DateTime?
+  startDate   DateTime
   endDate     DateTime?
   status      EventStatus @default(UPCOMING)
   description String?     @db.Text
