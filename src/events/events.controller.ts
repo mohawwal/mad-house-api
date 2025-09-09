@@ -35,8 +35,10 @@ export class EventsController {
   findAll(
     @Query('status')
     status?: 'UPCOMING' | 'ONGOING' | 'COMPLETED' | 'CANCELLED',
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
   ) {
-    return this.eventsService.findAll(status);
+    return this.eventsService.findAll(status, +page, +limit);
   }
 
   @Get(':id')

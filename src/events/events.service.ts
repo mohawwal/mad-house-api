@@ -29,12 +29,30 @@ export class EventsService {
     });
   }
 
-  async findAll(status?: 'UPCOMING' | 'ONGOING' | 'COMPLETED' | 'CANCELLED') {
-    if (status)
-      return this.databaseService.event.findMany({
-        where: { status },
-      });
-    return this.databaseService.event.findMany();
+  async findAll(
+    status?: 'UPCOMING' | 'ONGOING' | 'COMPLETED' | 'CANCELLED',
+    page: number = 1,
+    limit: number = 10,
+  ) {
+    const skip = (page - 1) * limit;
+    const where = status ? { status } : {};
+
+    const [data, total] = await this.databaseService.$transaction([
+      this.databaseService.event.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.databaseService.event.count({ where }),
+    ]);
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async findOne(id: number) {
@@ -54,5 +72,21 @@ export class EventsService {
     return this.databaseService.event.delete({
       where: { id },
     });
+  }
+
+  async updateEventStatuses() {
+    const now = new Date();
+
+    const updated = await this.databaseService.event.updateMany({
+      where: {
+        endDate: { lt: now },
+        status: 'ONGOING',
+      },
+      data: {
+        status: 'COMPLETED',
+      },
+    });
+
+    return { updated: updated.count };
   }
 }

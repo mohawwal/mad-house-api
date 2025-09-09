@@ -34,19 +34,21 @@ enum EventStatus {
 }
 
 model Event {
-  id                  Int           @id @default(autoincrement())
-  name                String        @db.VarChar(200)
-  image               String?       
-  photoLink           String?       // For completed events
-  ticketLink          String?       // For upcoming events
-  eventDate           DateTime 
-  status              EventStatus   @default(UPCOMING)
-  description         String?       @db.Text
-  location            String?       @db.VarChar(300)
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  id          Int        @id @default(autoincrement())
+  name        String     @db.VarChar(200)
+  image       String?
+  photoLink   String?
+  ticketLink  String?
+  startDate   DateTime?
+  endDate     DateTime?
+  status      EventStatus @default(UPCOMING)
+  description String?     @db.Text
+  location    String?     @db.VarChar(300)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
   @@map("events")
   @@index([status])
-  @@index([eventDate])
+  @@index([startDate])
+  @@index([endDate])
 }
