@@ -39,7 +39,7 @@ const sendToken = (
     expires: tokenExpires,
     httpOnly: true,
     secure: isProd,
-    sameSite: isProd ? 'none' : 'lax',
+    sameSite: 'strict',
     path: '/',
   };
 

@@ -268,4 +268,22 @@ export class AuthService {
       message: 'Logged out successfully',
     };
   }
+
+  //me
+  async getCurrentUser(id: number) {
+    const user = await this.databaseService.superUser.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      isVerified: user.isVerified,
+    };
+  }
 }
