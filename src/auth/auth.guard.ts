@@ -31,6 +31,7 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<RequestWithCookies>();
+
     const token = request.cookies?.token;
 
     if (!token) {
@@ -44,7 +45,8 @@ export class AuthGuard implements CanActivate {
 
       request.user = payload;
       return true;
-    } catch {
+    } catch (error) {
+      console.log('Token verification failed:', error);
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
