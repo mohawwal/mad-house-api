@@ -117,10 +117,8 @@ export class EventsService {
     });
   }
 
-  async updateEventStatuses() {
-    const now = new Date();
-
-    const ongoingUpdate = await this.databaseService.event.updateMany({
+  async updateUpcomingToOngoing(now: Date): Promise<number> {
+    const update = await this.databaseService.event.updateMany({
       where: {
         startDate: { lte: now },
         status: 'UPCOMING',
@@ -128,7 +126,11 @@ export class EventsService {
       data: { status: 'ONGOING' },
     });
 
-    const completedUpdate = await this.databaseService.event.updateMany({
+    return update.count;
+  }
+
+  async updateOngoingToCompleted(now: Date): Promise<number> {
+    const update = await this.databaseService.event.updateMany({
       where: {
         endDate: { lt: now },
         status: 'ONGOING',
@@ -136,9 +138,6 @@ export class EventsService {
       data: { status: 'COMPLETED' },
     });
 
-    return {
-      updatedToOngoing: ongoingUpdate.count,
-      updatedToCompleted: completedUpdate.count,
-    };
+    return update.count;
   }
 }

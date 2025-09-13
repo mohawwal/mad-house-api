@@ -7,9 +7,10 @@ import { IsVerifiedGuard } from './isVerified.guard';
 import { DatabaseService } from 'src/database/database.service';
 import { JwtService } from '@nestjs/jwt';
 import { EventsCron } from './events.cron';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
-  imports: [DatabaseModule, CloudinaryModule],
+  imports: [DatabaseModule, CloudinaryModule, ScheduleModule],
   controllers: [EventsController],
   providers: [
     EventsService,
