@@ -61,10 +61,21 @@ export class EventsService {
     });
   }
 
-  async update(id: number, updateEventDto: Prisma.EventCreateInput) {
+  async update(
+    id: number,
+    updateEventDto: Omit<Prisma.EventUpdateInput, 'image'>,
+    file?: Express.Multer.File,
+  ) {
+    const updateData: Prisma.EventUpdateInput = { ...updateEventDto };
+
+    if (file) {
+      const uploadResult = await this.cloudinaryService.uploadImage(file);
+      updateData.image = uploadResult.secure_url;
+    }
+
     return this.databaseService.event.update({
       where: { id },
-      data: updateEventDto,
+      data: updateData,
     });
   }
 

@@ -48,11 +48,13 @@ export class EventsController {
 
   @Patch(':id')
   @UseGuards(AuthGuard, IsVerifiedGuard)
-  update(
+  @UseInterceptors(FileInterceptor('image'))
+  async update(
     @Param('id') id: string,
-    @Body() updateEventDto: Prisma.EventCreateInput,
+    @Body() updateEventDto: Omit<Prisma.EventUpdateInput, 'image'>,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.eventsService.update(+id, updateEventDto);
+    return this.eventsService.update(+id, updateEventDto, file);
   }
 
   @Delete(':id')
