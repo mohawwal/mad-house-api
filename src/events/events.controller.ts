@@ -25,7 +25,8 @@ export class EventsController {
   @UseGuards(AuthGuard, IsVerifiedGuard)
   @UseInterceptors(FileInterceptor('image'))
   async create(
-    @Body() createEventDto: Omit<Prisma.EventCreateInput, 'image'>,
+    @Body()
+    createEventDto: Omit<Prisma.EventCreateInput, 'image'> & { image?: string },
     @UploadedFile() file?: Express.Multer.File,
   ) {
     return this.eventsService.create(createEventDto, file);
@@ -51,7 +52,8 @@ export class EventsController {
   @UseInterceptors(FileInterceptor('image'))
   async update(
     @Param('id') id: string,
-    @Body() updateEventDto: Omit<Prisma.EventUpdateInput, 'image'>,
+    @Body()
+    updateEventDto: Omit<Prisma.EventUpdateInput, 'image'> & { image?: string },
     @UploadedFile() file?: Express.Multer.File,
   ) {
     return this.eventsService.update(+id, updateEventDto, file);

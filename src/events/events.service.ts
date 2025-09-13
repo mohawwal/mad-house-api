@@ -11,7 +11,7 @@ export class EventsService {
   ) {}
 
   async create(
-    createEventDto: Omit<Prisma.EventCreateInput, 'image'>,
+    createEventDto: Omit<Prisma.EventCreateInput, 'image'> & { image?: string },
     file?: Express.Multer.File,
   ) {
     let imageUrl: string | null = null;
@@ -19,6 +19,8 @@ export class EventsService {
     if (file) {
       const uploadResult = await this.cloudinaryService.uploadImage(file);
       imageUrl = uploadResult.secure_url;
+    } else if (createEventDto.image) {
+      imageUrl = createEventDto.image;
     }
 
     return this.databaseService.event.create({
