@@ -61,7 +61,7 @@ export class EventsService {
     });
   }
 
-  async update(id: number, updateEventDto: Prisma.EventCreateInput) {
+  async update(id: number, updateEventDto: Prisma.EventUpdateInput) {
     return this.databaseService.event.update({
       where: { id },
       data: updateEventDto,

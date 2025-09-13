@@ -96,7 +96,7 @@ export class AuthService {
     }
 
     const otp = generateOTP();
-    const otpExpiry = new Date(Date.now() + 30 * 60 * 1000);
+    const otpExpiry = new Date(Date.now() + 60 * 60 * 1000);
 
     await this.databaseService.superUser.update({
       where: { email },

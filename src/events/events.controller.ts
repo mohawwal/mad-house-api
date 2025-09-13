@@ -50,7 +50,7 @@ export class EventsController {
   @UseGuards(AuthGuard, IsVerifiedGuard)
   update(
     @Param('id') id: string,
-    @Body() updateEventDto: Prisma.EventCreateInput,
+    @Body() updateEventDto: Prisma.EventUpdateInput,
   ) {
     return this.eventsService.update(+id, updateEventDto);
   }

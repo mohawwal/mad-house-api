@@ -66,20 +66,6 @@ export class AuthController {
     return this.authService.logout(response);
   }
 
-  // @Get('me')
-  // @UseGuards(AuthGuard)
-  // getMe(@User() user: JwtPayload) {
-  //   return {
-  //     success: true,
-  //     data: {
-  //       id: user.id,
-  //       email: user.email,
-  //       username: user.username,
-  //       isVerified: user.isVerified,
-  //     },
-  //   };
-  // }
-
   @Get('me')
   @UseGuards(AuthGuard)
   async getMe(@User() user: JwtPayload) {
