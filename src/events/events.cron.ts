@@ -14,7 +14,9 @@ export class EventsCron {
     try {
       const result = await this.eventsService.updateEventStatuses();
       this.logger.log(
-        `Event status update completed. Updated ${result.updated} events.`,
+        `Event status update completed. 
+        Updated to Ongoing: ${result.updatedToOngoing}, 
+        Updated to Completed: ${result.updatedToCompleted}`,
       );
     } catch (error) {
       this.logger.error('Error updating event statuses:', error);

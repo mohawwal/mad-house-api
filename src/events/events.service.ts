@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
@@ -15,6 +15,21 @@ export class EventsService {
     file?: Express.Multer.File,
   ) {
     let imageUrl: string | null = null;
+
+    if (createEventDto.status === 'UPCOMING') {
+      const startDate =
+        typeof createEventDto.startDate === 'string'
+          ? new Date(createEventDto.startDate)
+          : createEventDto.startDate;
+
+      const now = new Date();
+
+      if (startDate < now) {
+        throw new BadRequestException(
+          'Start date cannot be in the past for UPCOMING events.',
+        );
+      }
+    }
 
     if (file) {
       const uploadResult = await this.cloudinaryService.uploadImage(file);
@@ -75,6 +90,21 @@ export class EventsService {
       updateData.image = uploadResult.secure_url;
     }
 
+    if (updateEventDto.status === 'UPCOMING' && updateEventDto.startDate) {
+      const startDate =
+        typeof updateEventDto.startDate === 'string'
+          ? new Date(updateEventDto.startDate)
+          : (updateEventDto.startDate as Date);
+
+      const now = new Date();
+
+      if (startDate < now) {
+        throw new BadRequestException(
+          'Start date cannot be in the past for UPCOMING events.',
+        );
+      }
+    }
+
     return this.databaseService.event.update({
       where: { id },
       data: updateData,
@@ -90,16 +120,25 @@ export class EventsService {
   async updateEventStatuses() {
     const now = new Date();
 
-    const updated = await this.databaseService.event.updateMany({
+    const ongoingUpdate = await this.databaseService.event.updateMany({
+      where: {
+        startDate: { lte: now },
+        status: 'UPCOMING',
+      },
+      data: { status: 'ONGOING' },
+    });
+
+    const completedUpdate = await this.databaseService.event.updateMany({
       where: {
         endDate: { lt: now },
         status: 'ONGOING',
       },
-      data: {
-        status: 'COMPLETED',
-      },
+      data: { status: 'COMPLETED' },
     });
 
-    return { updated: updated.count };
+    return {
+      updatedToOngoing: ongoingUpdate.count,
+      updatedToCompleted: completedUpdate.count,
+    };
   }
 }
