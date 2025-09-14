@@ -9,6 +9,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:8000',
       'https://admin-mad-house-vvxm.vercel.app',
+      'https://4-tl.vercel.app/',
     ],
     credentials: true,
   });
