@@ -6,13 +6,12 @@ import { EventsService } from './events.service';
 export class EventsCron {
   private readonly logger = new Logger(EventsCron.name);
 
-  // optional locks to avoid overlapping runs
   private isProcessingUpcoming = false;
   private isProcessingCompleted = false;
 
   constructor(private readonly eventsService: EventsService) {}
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron('*/5 * * * *')
   async updateUpcomingToOngoing() {
     if (this.isProcessingUpcoming) return;
     this.isProcessingUpcoming = true;
