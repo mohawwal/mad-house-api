@@ -59,7 +59,7 @@ export class EventsService {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { startDate: 'asc' },
       }),
       this.databaseService.event.count({ where }),
     ]);
