@@ -8,6 +8,7 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'http://localhost:8000',
+      'http://localhost:4000',
       'https://admin-mad-house-vvxm.vercel.app',
       'https://4-tl.vercel.app/',
     ],
