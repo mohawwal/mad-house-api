@@ -10,7 +10,7 @@ async function bootstrap() {
       'http://localhost:8000',
       'http://localhost:4000',
       'https://admin-mad-house-vvxm.vercel.app',
-      'https://4-tl.vercel.app/',
+      'https://4-tl.vercel.app',
     ],
     credentials: true,
   });
