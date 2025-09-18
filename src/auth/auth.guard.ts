@@ -7,14 +7,6 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 
-interface RequestWithCookies extends Request {
-  cookies: {
-    token?: string;
-    [key: string]: any;
-  };
-  user?: JwtPayload;
-}
-
 interface JwtPayload {
   id: number;
   email: string;
@@ -25,17 +17,32 @@ interface JwtPayload {
   exp?: number;
 }
 
+interface AuthenticatedRequest extends Request {
+  cookies: {
+    token?: string;
+    [key: string]: any;
+  };
+  user?: JwtPayload;
+}
+
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(private readonly jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<RequestWithCookies>();
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
-    const token = request.cookies?.token;
+    let token: string | undefined = request.cookies?.token;
 
     if (!token) {
-      throw new UnauthorizedException('No token found in cookies');
+      const authHeader = request.headers['authorization'];
+      if (authHeader?.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+      }
+    }
+
+    if (!token) {
+      throw new UnauthorizedException('No token found');
     }
 
     try {
@@ -45,9 +52,11 @@ export class AuthGuard implements CanActivate {
 
       request.user = payload;
       return true;
-    } catch (error) {
-      console.log('Token verification failed:', error);
-      throw new UnauthorizedException('Invalid or expired token');
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'TokenExpiredError') {
+        throw new UnauthorizedException('Token expired, please log in again');
+      }
+      throw new UnauthorizedException('Invalid token');
     }
   }
 }
