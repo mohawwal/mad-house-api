@@ -48,6 +48,7 @@ const sendToken = (
   res.status(statusCode).json({
     success: true,
     accessToken,
+    refreshToken,
     user: {
       id: user.id,
       email: user.email,
