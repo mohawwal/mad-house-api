@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { DatabaseModule } from 'src/database/database.module';
-import { mailTrapConstants } from './constants';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
@@ -18,10 +17,12 @@ import { ConfigModule } from '@nestjs/config';
     }),
     MailerModule.forRoot({
       transport: {
-        host: mailTrapConstants.emailHost,
+        service: 'gmail',
+        port: 465,
+        secure: true,
         auth: {
-          user: mailTrapConstants.userEmail,
-          pass: mailTrapConstants.userPassword,
+          user: process.env.GGMAIL_APP_USER,
+          pass: process.env.GMAIL_APP_PASSWORD,
         },
       },
     }),
