@@ -24,14 +24,14 @@ const sendToken = (
   };
 
   const accessToken = jwtService.sign(payload, {
-    expiresIn: process.env.ACCESS_EXPIRES_TIME || '15m',
+    expiresIn: process.env.JWT_EXPIRESIN || '15m',
     secret: process.env.JWT_SECRET,
   });
 
   const refreshToken = jwtService.sign(
     { sub: user.id },
     {
-      expiresIn: process.env.REFRESH_EXPIRES_TIME || '30d',
+      expiresIn: process.env.EXPIRES_TIME || '7d',
       secret: process.env.JWT_REFRESH_SECRET,
     },
   );
@@ -44,14 +44,6 @@ const sendToken = (
     sameSite: isProd ? 'none' : 'lax',
     path: '/',
     maxAge: 15 * 60 * 1000,
-  });
-
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? 'none' : 'lax',
-    path: '/',
-    maxAge: 30 * 24 * 60 * 60 * 1000,
   });
 
   res.status(statusCode).json({
