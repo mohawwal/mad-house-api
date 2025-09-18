@@ -1,7 +1,5 @@
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
-import { parseTimeToMs } from './auth.helper';
-import type { CookieOptions } from 'express';
 
 interface User {
   id: number;
@@ -25,29 +23,31 @@ const sendToken = (
     sub: user.id,
   };
 
-  const token = jwtService.sign(payload, {
-    expiresIn: process.env.EXPIRES_TIME || '7d',
+  const accessToken = jwtService.sign(payload, {
+    expiresIn: process.env.ACCESS_EXPIRES_TIME || '15m',
     secret: process.env.JWT_SECRET,
   });
 
-  const tokenMs = parseTimeToMs(process.env.EXPIRES_TIME || '7d');
-  const tokenExpires = new Date(Date.now() + tokenMs);
+  const refreshToken = jwtService.sign(
+    { sub: user.id },
+    {
+      expiresIn: process.env.REFRESH_EXPIRES_TIME || '30d',
+      secret: process.env.JWT_REFRESH_SECRET,
+    },
+  );
 
   const isProd = process.env.NODE_ENV === 'production';
-
-  const cookieOptions: CookieOptions = {
-    expires: tokenExpires,
+  res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
     secure: isProd,
     sameSite: isProd ? 'none' : 'lax',
     path: '/',
-  };
-
-  res.cookie('token', token, cookieOptions);
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+  });
 
   res.status(statusCode).json({
     success: true,
-    token,
+    accessToken,
     user: {
       id: user.id,
       email: user.email,
@@ -57,7 +57,7 @@ const sendToken = (
     message,
   });
 
-  return token;
+  return accessToken;
 };
 
 export default sendToken;
