@@ -35,15 +35,33 @@ const sendToken = (
 
   const isProd = process.env.NODE_ENV === 'production';
 
+  // Enhanced cookie options for Safari compatibility
   const cookieOptions: CookieOptions = {
     expires: tokenExpires,
     httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? 'none' : 'lax',
+    secure: isProd, // Must be true in production for SameSite=None
+    sameSite: isProd ? 'none' : 'lax', // 'none' requires secure=true
     path: '/',
+    // Add domain if in production and you have a specific domain
+    ...(isProd &&
+      process.env.COOKIE_DOMAIN && {
+        domain: process.env.COOKIE_DOMAIN,
+      }),
   };
 
+  // Set the main token cookie
   res.cookie('token', token, cookieOptions);
+
+  // Alternative: Also set a fallback cookie with different settings for Safari
+  if (isProd) {
+    // Fallback cookie with SameSite=lax for Safari
+    res.cookie('token_fallback', token, {
+      ...cookieOptions,
+      sameSite: 'lax',
+      // Remove secure requirement for fallback in case of issues
+      secure: false,
+    });
+  }
 
   res.status(statusCode).json({
     success: true,

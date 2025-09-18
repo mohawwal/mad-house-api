@@ -1,18 +1,15 @@
 import {
+  Injectable,
   CanActivate,
   ExecutionContext,
-  Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Request } from 'express';
 
-interface RequestWithCookies extends Request {
-  cookies: {
-    token?: string;
-    [key: string]: any;
-  };
-  user?: JwtPayload;
+interface RequestWithCookies {
+  cookies: { [key: string]: string };
+  headers: { [key: string]: string };
+  user?: any;
 }
 
 interface JwtPayload {
@@ -21,8 +18,6 @@ interface JwtPayload {
   username: string;
   isVerified: boolean;
   sub: number;
-  iat?: number;
-  exp?: number;
 }
 
 @Injectable()
@@ -32,10 +27,11 @@ export class AuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<RequestWithCookies>();
 
-    const token = request.cookies?.token;
+    // Try multiple methods to get the token for Safari compatibility
+    const token = this.extractTokenFromRequest(request);
 
     if (!token) {
-      throw new UnauthorizedException('No token found in cookies');
+      throw new UnauthorizedException('No token found');
     }
 
     try {
@@ -49,5 +45,30 @@ export class AuthGuard implements CanActivate {
       console.log('Token verification failed:', error);
       throw new UnauthorizedException('Invalid or expired token');
     }
+  }
+
+  private extractTokenFromRequest(request: RequestWithCookies): string | null {
+    // Method 1: Try primary token cookie
+    if (request.cookies?.token) {
+      return request.cookies.token;
+    }
+
+    // Method 2: Try fallback token cookie (for Safari issues)
+    if (request.cookies?.token_fallback) {
+      return request.cookies.token_fallback;
+    }
+
+    // Method 3: Try Authorization header as fallback
+    const authHeader = request.headers?.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      return authHeader.substring(7);
+    }
+
+    // Method 4: Try custom header (you can set this from frontend)
+    if (request.headers?.['x-auth-token']) {
+      return request.headers['x-auth-token'];
+    }
+
+    return null;
   }
 }
