@@ -37,6 +37,15 @@ const sendToken = (
   );
 
   const isProd = process.env.NODE_ENV === 'production';
+
+  res.cookie('token', accessToken, {
+    httpOnly: false,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    path: '/',
+    maxAge: 15 * 60 * 1000,
+  });
+
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
     secure: isProd,
