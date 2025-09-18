@@ -43,7 +43,7 @@ const sendToken = (
     path: '/',
   };
 
-  res.cookie('token', token, cookieOptions);
+  res.cookie('madToken', token, cookieOptions);
 
   res.status(statusCode).json({
     success: true,
