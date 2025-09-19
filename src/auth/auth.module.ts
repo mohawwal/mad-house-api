@@ -21,7 +21,7 @@ import { ConfigModule } from '@nestjs/config';
         port: 465,
         secure: true,
         auth: {
-          user: process.env.GGMAIL_APP_USER,
+          user: process.env.GMAIL_APP_USER,
           pass: process.env.GMAIL_APP_PASSWORD,
         },
       },
