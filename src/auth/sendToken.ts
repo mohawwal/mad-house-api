@@ -23,8 +23,8 @@ const sendToken = (
     sub: user.id,
   };
 
-  const accessToken = jwtService.sign(payload, {
-    expiresIn: process.env.JWT_EXPIRESIN || '15m',
+  const token = jwtService.sign(payload, {
+    expiresIn: process.env.JWT_EXPIRESIN || '1h',
     secret: process.env.JWT_SECRET,
   });
 
@@ -38,17 +38,17 @@ const sendToken = (
 
   const isProd = process.env.NODE_ENV === 'production';
 
-  res.cookie('token', accessToken, {
+  res.cookie('token', token, {
     httpOnly: false,
     secure: isProd,
     sameSite: isProd ? 'none' : 'lax',
     path: '/',
-    maxAge: 15 * 60 * 1000,
+    maxAge: 60 * 60 * 1000,
   });
 
-  res.status(statusCode).json({
+  const responseData = {
     success: true,
-    accessToken,
+    token,
     refreshToken,
     user: {
       id: user.id,
@@ -57,9 +57,10 @@ const sendToken = (
       isVerified: user.isVerified,
     },
     message,
-  });
+  };
 
-  return accessToken;
+  res.status(statusCode).json(responseData);
+  return token;
 };
 
 export default sendToken;
