@@ -75,4 +75,15 @@ export class AuthController {
       data,
     };
   }
+
+  @Post('refresh-token')
+  refreshToken(
+    @Body() refreshTokenDto: { refreshToken: string },
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    return this.authService.refreshToken(
+      refreshTokenDto.refreshToken,
+      response,
+    );
+  }
 }

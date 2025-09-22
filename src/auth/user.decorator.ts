@@ -10,6 +10,12 @@ interface JwtPayload {
   exp?: number;
 }
 
+export interface RefreshTokenPayload {
+  sub: number;
+  iat?: number;
+  exp?: number;
+}
+
 interface RequestWithUser extends Request {
   user: JwtPayload;
 }

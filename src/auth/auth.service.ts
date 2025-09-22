@@ -13,6 +13,7 @@ import { generateOTP } from './auth.helper';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Response } from 'express';
 import sendToken from './sendToken';
+import { RefreshTokenPayload } from './user.decorator';
 
 @Injectable()
 export class AuthService {
@@ -79,7 +80,6 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // Use sendToken utility
     sendToken(user, 200, response, this.jwtService, 'Login successful');
   }
 
@@ -285,5 +285,40 @@ export class AuthService {
       username: user.username,
       isVerified: user.isVerified,
     };
+  }
+
+  //Refresh Token
+  async refreshToken(refreshToken: string, response: Response): Promise<void> {
+    try {
+      const payload = await this.jwtService.verifyAsync<RefreshTokenPayload>(
+        refreshToken,
+        {
+          secret: process.env.JWT_REFRESH_SECRET,
+        },
+      );
+
+      const user = await this.databaseService.superUser.findUnique({
+        where: { id: payload.sub },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      sendToken(
+        user,
+        200,
+        response,
+        this.jwtService,
+        'Token refreshed successfully',
+      );
+    } catch (error) {
+      if (error instanceof Error && error.name === 'TokenExpiredError') {
+        throw new UnauthorizedException(
+          'Refresh token expired, please log in again',
+        );
+      }
+      throw new UnauthorizedException('Invalid refresh token');
+    }
   }
 }
