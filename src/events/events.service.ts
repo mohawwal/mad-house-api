@@ -54,15 +54,23 @@ export class EventsService {
     const skip = (page - 1) * limit;
     const where = status ? { status } : {};
 
+    let orderBy: Prisma.EventOrderByWithRelationInput;
+    if (status === 'COMPLETED') {
+      orderBy = { endDate: 'desc' };
+    } else {
+      orderBy = { startDate: 'asc' };
+    }
+
     const [data, total] = await this.databaseService.$transaction([
       this.databaseService.event.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { startDate: 'asc' },
+        orderBy,
       }),
       this.databaseService.event.count({ where }),
     ]);
+
     return {
       data,
       total,
