@@ -23,7 +23,6 @@ export class AuthService {
     private readonly mailerService: MailerService,
   ) {}
 
-  // Sign up
   async signUp(
     createAuthDto: Prisma.superUserCreateInput,
   ): Promise<{ success: boolean; data: any; message: string }> {
@@ -113,10 +112,10 @@ export class AuthService {
         subject: 'MadHouse Admin - Password Reset OTP',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #333;">MadHouse Admin Account Password Reset Request</h2>
+            <h2 style="color: #333;">MadHouse Account One Time Password</h2>
             <p>You have requested to reset your password. Please use the following OTP to proceed:</p>
             <div style="background-color: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0;">
-              <h1 style="color: #007bff; font-size: 32px; letter-spacing: 8px; margin: 0;">${otp}</h1>
+              <h1 style="color: #EB8014; font-size: 32px; letter-spacing: 8px; margin: 0;">${otp}</h1>
             </div>
             <p><strong>This OTP is valid for 30 minutes only.</strong></p>
             <p>If you didn't request this password reset, please ignore this email.</p>

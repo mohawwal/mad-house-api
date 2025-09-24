@@ -52,3 +52,14 @@ model Event {
   @@index([startDate])
   @@index([endDate])
 }
+
+model Contact {
+  id        Int      @id @default(autoincrement())
+  firstname String?  @db.VarChar(100)
+  lastname  String?  @db.VarChar(100)
+  email     String   @unique @db.VarChar(200)
+  createdAt DateTime @default(now())
+
+  @@map("contacts")
+  @@index([email])
+}

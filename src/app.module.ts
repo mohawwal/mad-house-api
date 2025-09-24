@@ -8,6 +8,7 @@ import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ContactsModule } from './contacts/contacts.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { ScheduleModule } from '@nestjs/schedule';
       },
     }),
     ScheduleModule.forRoot(),
+    ContactsModule,
   ],
   controllers: [AppController],
   providers: [AppService, CloudinaryService],
