@@ -138,4 +138,80 @@ export class ContactsService {
       where: { id },
     });
   }
+
+  async sendBulkEmail(
+    subject: string,
+    htmlContent: string,
+    batchSize: number = 50,
+  ) {
+    // Get total count of contacts
+    const totalContacts = await this.databaseService.contact.count();
+
+    if (totalContacts === 0) {
+      throw new BadRequestException('No contacts found to send emails to');
+    }
+
+    const totalBatches = Math.ceil(totalContacts / batchSize);
+    const results = {
+      totalContacts,
+      successCount: 0,
+      failedCount: 0,
+      failedEmails: [] as string[],
+    };
+
+    // Process contacts in batches to avoid overwhelming the email service
+    for (let batch = 0; batch < totalBatches; batch++) {
+      const skip = batch * batchSize;
+
+      const contacts = await this.databaseService.contact.findMany({
+        skip,
+        take: batchSize,
+        select: {
+          email: true,
+          firstname: true,
+          lastname: true,
+        },
+      });
+
+      // Send emails concurrently within each batch
+      const emailPromises = contacts.map(async (contact) => {
+        try {
+          // Personalize the email content by replacing placeholders
+          const personalizedContent = htmlContent
+            .replace(/{{firstname}}/g, contact.firstname || 'Subscriber')
+            .replace(/{{lastname}}/g, contact.lastname || '')
+            .replace(/{{email}}/g, contact.email);
+
+          await this.mailerService.sendMail({
+            from: 'MadHouse Events <aanileleye@gmail.com>',
+            to: contact.email,
+            subject: subject,
+            html: personalizedContent,
+          });
+
+          results.successCount++;
+          return { email: contact.email, success: true };
+        } catch (error) {
+          console.error(`Failed to send email to ${contact.email}:`, error);
+          results.failedCount++;
+          results.failedEmails.push(contact.email);
+          return { email: contact.email, success: false };
+        }
+      });
+
+      // Wait for current batch to complete before moving to next
+      await Promise.allSettled(emailPromises);
+
+      // Optional: Add delay between batches to be respectful to email service
+      if (batch < totalBatches - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
+
+    return {
+      success: true,
+      message: `Bulk email sending completed. ${results.successCount} sent successfully, ${results.failedCount} failed.`,
+      results,
+    };
+  }
 }
