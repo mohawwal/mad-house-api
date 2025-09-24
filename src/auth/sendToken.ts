@@ -39,7 +39,7 @@ const sendToken = (
   const isProd = process.env.NODE_ENV === 'production';
 
   res.cookie('token', token, {
-    httpOnly: false,
+    httpOnly: true,
     secure: isProd,
     sameSite: isProd ? 'none' : 'lax',
     path: '/',

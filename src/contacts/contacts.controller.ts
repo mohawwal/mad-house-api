@@ -25,6 +25,7 @@ export class ContactsController {
   }
 
   @Get()
+  @UseGuards(AuthGuard, IsVerifiedGuard)
   findAll(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
@@ -40,6 +41,7 @@ export class ContactsController {
   }
 
   @Post('bulk-email')
+  @UseGuards(AuthGuard, IsVerifiedGuard)
   sendBulkEmail(
     @Body()
     bulkEmailDto: {
