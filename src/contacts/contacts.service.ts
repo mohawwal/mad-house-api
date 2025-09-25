@@ -55,7 +55,7 @@ export class ContactsService {
 
     try {
       await this.mailerService.sendMail({
-        from: 'MadHouse Events <aanileleye@gmail.com>',
+        from: 'MadHouse Events <4tlifee@gmail.com>',
         to: contact.email,
         subject: 'Confirm your subscription to MadHouse',
         html: `
@@ -222,7 +222,7 @@ export class ContactsService {
             .replace(/{{email}}/g, contact.email);
 
           await this.mailerService.sendMail({
-            from: 'MadHouse Events <aanileleye@gmail.com>',
+            from: 'MadHouse Events <4tlifee@gmail.com>',
             to: contact.email,
             subject,
             html: personalizedContent,
