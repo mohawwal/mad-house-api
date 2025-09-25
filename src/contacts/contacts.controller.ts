@@ -70,7 +70,7 @@ export class ContactsController {
           </head>
           <body>
             <div class="container">
-              <h1>🤬 You are now a subscriber</h1>
+              <h1>🔥 You are now a subscriber</h1>
               <a href="https://4-tl.vercel.app">
                 You can start receiving mails from madhouse
               </a>
@@ -82,10 +82,41 @@ export class ContactsController {
       console.error('Error confirming subscription:', err);
       return res.status(400).send(`
         <html>
-          <head><title>Invalid Link</title></head>
+          <head>
+            <title>Madhouse Subscription</title>
+            <style>
+              body {
+                margin: 0;
+                padding: 0;
+                font-family: Arial, sans-serif;
+                background-color: #ffffff;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+              }
+              .container {
+                text-align: center;
+              }
+              h1 {
+                font-size: 20px;
+                color:rgb(16, 16, 16);
+                margin-bottom: 16px;
+              }
+              a {
+                font-size: 14px;
+                color:rgba(0, 0, 0, 0.48);
+                text-decoration: underline;
+              }
+            </style>
+          </head>
           <body>
-            <h1 style="color:red;">❌ Invalid or expired confirmation link</h1>
-            <p>Please try subscribing again.</p>
+            <div class="container">
+              <h1>🤬 Invalid or expired confirmation link</h1>
+              <a href="https://4-tl.vercel.app">
+                You can try subscribing again.
+              </a>
+            </div>
           </body>
         </html>
       `);
