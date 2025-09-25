@@ -167,11 +167,14 @@ export class ContactsService {
     htmlContent: string,
     batchSize: number = 50,
   ) {
-    // Get total count of contacts
-    const totalContacts = await this.databaseService.contact.count();
+    const totalContacts = await this.databaseService.contact.count({
+      where: { status: 'ACTIVE' },
+    });
 
     if (totalContacts === 0) {
-      throw new BadRequestException('No contacts found to send emails to');
+      throw new BadRequestException(
+        'No active contacts found to send emails to',
+      );
     }
 
     const totalBatches = Math.ceil(totalContacts / batchSize);
@@ -182,13 +185,13 @@ export class ContactsService {
       failedEmails: [] as string[],
     };
 
-    // Process contacts in batches to avoid overwhelming the email service
     for (let batch = 0; batch < totalBatches; batch++) {
       const skip = batch * batchSize;
 
       const contacts = await this.databaseService.contact.findMany({
         skip,
         take: batchSize,
+        where: { status: 'ACTIVE' },
         select: {
           email: true,
           firstname: true,
@@ -196,10 +199,8 @@ export class ContactsService {
         },
       });
 
-      // Send emails concurrently within each batch
       const emailPromises = contacts.map(async (contact) => {
         try {
-          // Personalize the email content by replacing placeholders
           const personalizedContent = htmlContent
             .replace(/{{firstname}}/g, contact.firstname || 'Subscriber')
             .replace(/{{lastname}}/g, contact.lastname || '')
@@ -208,7 +209,7 @@ export class ContactsService {
           await this.mailerService.sendMail({
             from: 'MadHouse Events <aanileleye@gmail.com>',
             to: contact.email,
-            subject: subject,
+            subject,
             html: personalizedContent,
           });
 
@@ -222,13 +223,12 @@ export class ContactsService {
         }
       });
 
-      // Wait for current batch to complete before moving to next
       await Promise.allSettled(emailPromises);
 
-      // Optional: Add delay between batches to be respectful to email service
-      if (batch < totalBatches - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
+      // delay between batches
+      // if (batch < totalBatches - 1) {
+      //   await new Promise((resolve) => setTimeout(resolve, 1000));
+      // }
     }
 
     return {
