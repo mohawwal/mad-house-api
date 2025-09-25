@@ -7,12 +7,20 @@ import {
 import { Prisma, Contact } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { MailerService } from '@nestjs-modules/mailer';
+import { JwtService } from '@nestjs/jwt';
+
+interface ConfirmTokenPayload {
+  contactId: number;
+  iat: number;
+  exp: number;
+}
 
 @Injectable()
 export class ContactsService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly mailerService: MailerService,
+    private readonly jwtService: JwtService,
   ) {}
 
   async create(
@@ -37,46 +45,33 @@ export class ContactsService {
       throw new BadRequestException('Failed to create contact');
     }
 
+    const token = this.jwtService.sign(
+      { contactId: contact.id },
+      { expiresIn: '24h' },
+    );
+
+    const baseUrl = process.env.APP_URL;
+    const confirmUrl = `${baseUrl}/contacts/confirm?token=${token}`;
+
     try {
       await this.mailerService.sendMail({
         from: 'MadHouse Events <aanileleye@gmail.com>',
         to: contact.email,
-        subject: 'Welcome to MadHouse Events!',
+        subject: 'Confirm your subscription to MadHouse',
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #EB8014; margin-bottom: 10px;">Welcome to MadHouse Events!</h1>
-              <p style="color: #666; font-size: 18px;">Thank you for subscribing to our events</p>
-            </div>
-            
-            <div style="background-color: #f9f9f9; padding: 25px; border-radius: 8px; margin: 20px 0;">
-              <h2 style="color: #333; margin-top: 0;">Hi ${contact.firstname || 'Subscriber'}!</h2>
-              <p style="color: #555; line-height: 1.6;">
-                You have successfully subscribed to MadHouse Events. We're excited to have you join our community!
-              </p>
-              <p style="color: #555; line-height: 1.6;">
-                You'll now receive updates about our latest events, exclusive offers, and exciting announcements 
-                directly to your inbox.
-              </p>
-            </div>
-
-            <div style="background-color: #EB8014; color: white; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
-              <h3 style="margin: 0 0 10px 0;">🎃Stay Mad! 🤪Stay Connected!</h3>
-              <p style="margin: 0; opacity: 0.9;">
-                Keep an eye on your inbox for upcoming events and special announcements.
-              </p>
-            </div>
-
-            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-            
-            <div style="text-align: center;">
-              <p style="color: #999; font-size: 12px; margin: 0;">
-                This is an automated confirmation email. Please do not reply to this email.
-              </p>
-              <p style="color: #999; font-size: 12px; margin: 5px 0 0 0;">
-                © ${new Date().getFullYear()} MadHouse Events. All rights reserved.
-              </p>
-            </div>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
+            <h2 style="color: #EB8014;">Confirm Your Subscription</h2>
+            <p style="color: #333; line-height: 1.5;">
+              Before we send you any emails, we need to confirm your subscription.
+            </p>
+            <a href="${confirmUrl}" 
+              style="display:inline-block; background:#EB8014; color:white; 
+              padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold;">
+              Confirm Subscription
+            </a>
+            <p style="margin-top:20px; color:#666; font-size:14px;">
+              If you did not subscribe to MadHouse Events, you can safely ignore this email.
+            </p>
           </div>
         `,
       });
@@ -91,11 +86,36 @@ export class ContactsService {
       success: true,
       data: contact,
       message:
-        'Successfully subscribed to MadHouse events. Confirmation email sent!',
+        'Subscription created. Please confirm your email to activate subscription.',
     };
   }
 
-  async findAll(page: number = 1, limit: number = 10, email?: string) {
+  async confirmSubscription(token: string) {
+    try {
+      const payload = this.jwtService.verify<ConfirmTokenPayload>(token);
+
+      const contact = await this.databaseService.contact.update({
+        where: { id: payload.contactId },
+        data: { status: 'ACTIVE' },
+      });
+
+      return {
+        success: true,
+        message: 'Subscription confirmed successfully!',
+        data: contact,
+      };
+    } catch (err) {
+      console.error('Error confirming subscription:', err);
+      throw new BadRequestException('Invalid or expired confirmation link');
+    }
+  }
+
+  async findAll(
+    page: number = 1,
+    limit: number = 10,
+    email?: string,
+    status?: 'ACTIVE' | 'INACTIVE',
+  ) {
     const skip = (page - 1) * limit;
 
     const where: Prisma.ContactWhereInput = {};
@@ -104,6 +124,9 @@ export class ContactsService {
         contains: email.toLowerCase(),
         mode: 'insensitive',
       };
+    }
+    if (status) {
+      where.status = status;
     }
 
     const [data, total] = await this.databaseService.$transaction([

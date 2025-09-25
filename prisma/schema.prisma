@@ -53,13 +53,20 @@ model Event {
   @@index([endDate])
 }
 
+enum ContactStatus {
+  INACTIVE
+  ACTIVE
+}
+
 model Contact {
-  id        Int      @id @default(autoincrement())
-  firstname String?  @db.VarChar(100)
-  lastname  String?  @db.VarChar(100)
-  email     String   @unique @db.VarChar(200)
-  createdAt DateTime @default(now())
+  id        Int             @id @default(autoincrement())
+  firstname String?         @db.VarChar(100)
+  lastname  String?         @db.VarChar(100)
+  email     String          @unique @db.VarChar(200)
+  status    ContactStatus   @default(INACTIVE)
+  createdAt DateTime        @default(now())
 
   @@map("contacts")
+  @@index([status])
   @@index([email])
 }
