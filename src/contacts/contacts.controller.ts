@@ -21,7 +21,6 @@ export class ContactsController {
   constructor(private readonly contactsService: ContactsService) {}
 
   @Post()
-  @UseGuards(AuthGuard, IsVerifiedGuard)
   create(@Body() createContactDto: Prisma.ContactCreateInput) {
     return this.contactsService.create(createContactDto);
   }
