@@ -148,6 +148,21 @@ export class ContactsService {
     };
   }
 
+  async findById(id: number): Promise<{ success: boolean; data: Contact }> {
+    const contact = await this.databaseService.contact.findUnique({
+      where: { id },
+    });
+
+    if (!contact) {
+      throw new NotFoundException(`Contact with ID ${id} not found`);
+    }
+
+    return {
+      success: true,
+      data: contact,
+    };
+  }
+
   async remove(id: number) {
     const existingContact = await this.databaseService.contact.findUnique({
       where: { id },

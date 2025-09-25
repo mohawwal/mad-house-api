@@ -134,6 +134,12 @@ export class ContactsController {
     return this.contactsService.findAll(+page, +limit, email, status);
   }
 
+  @Get(':id')
+  @UseGuards(AuthGuard, IsVerifiedGuard)
+  getContactById(@Param('id') id: string) {
+    return this.contactsService.findById(+id);
+  }
+
   @Delete(':id')
   @UseGuards(AuthGuard, IsVerifiedGuard)
   remove(@Param('id') id: string) {
