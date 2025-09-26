@@ -9,6 +9,7 @@ import {
   Param,
   BadRequestException,
   Res,
+  Patch,
 } from '@nestjs/common';
 import { ContactsService } from './contacts.service';
 import { Prisma } from '@prisma/client';
@@ -162,5 +163,18 @@ export class ContactsController {
     }
 
     return this.contactsService.sendBulkEmail(subject, htmlContent, batchSize);
+  }
+
+  @Patch(':id/status')
+  @UseGuards(AuthGuard, IsVerifiedGuard)
+  updateStatus(
+    @Param('id') id: string,
+    @Body('status') status: 'ACTIVE' | 'INACTIVE',
+  ) {
+    if (!status || !['ACTIVE', 'INACTIVE'].includes(status)) {
+      throw new BadRequestException('Invalid status value');
+    }
+
+    return this.contactsService.updateStatus(+id, status);
   }
 }
