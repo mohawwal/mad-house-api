@@ -34,62 +34,60 @@ export class ContactsService {
       throw new ConflictException('Email is already subscribed to our events');
     }
 
-    return await this.databaseService.$transaction(async (prisma) => {
-      const contact = await prisma.contact.create({
-        data: {
-          ...createContactDto,
-          email: createContactDto.email.toLowerCase(),
-        },
-      });
-
-      if (!contact) {
-        throw new BadRequestException('Failed to create contact');
-      }
-
-      const token = this.jwtService.sign(
-        { contactId: contact.id },
-        { expiresIn: '24h' },
-      );
-
-      const baseUrl = process.env.APP_URL;
-      const confirmUrl = `${baseUrl}/contacts/confirm?token=${token}`;
-
-      try {
-        await this.mailerService.sendMail({
-          from: 'MadHouse Events <4tlifee@gmail.com>',
-          to: contact.email,
-          subject: 'Confirm your subscription to MadHouse',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
-              <h2 style="color: #EB8014;">Confirm Your Subscription</h2>
-              <p style="color: #333; line-height: 1.5;">
-                Before we send you any emails, we need to confirm your subscription.
-              </p>
-              <a href="${confirmUrl}" 
-                style="display:inline-block; background:#EB8014; color:white; 
-                padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold;">
-                Confirm Subscription
-              </a>
-              <p style="margin-top:20px; color:#666; font-size:14px;">
-                If you did not subscribe to MadHouse Events, you can safely ignore this email.
-              </p>
-            </div>
-          `,
-        });
-      } catch (emailError) {
-        console.error('Failed to send confirmation email:', emailError);
-        throw new BadRequestException(
-          'Failed to send confirmation email. Please try again later.',
-        );
-      }
-
-      return {
-        success: true,
-        data: contact,
-        message:
-          'Subscription created. Please confirm your email to activate subscription.',
-      };
+    const contact = await this.databaseService.contact.create({
+      data: {
+        ...createContactDto,
+        email: createContactDto.email.toLowerCase(),
+      },
     });
+
+    if (!contact) {
+      throw new BadRequestException('Failed to create contact');
+    }
+
+    const token = this.jwtService.sign(
+      { contactId: contact.id },
+      { expiresIn: '24h' },
+    );
+
+    const baseUrl = process.env.APP_URL;
+    const confirmUrl = `${baseUrl}/contacts/confirm?token=${token}`;
+
+    try {
+      await this.mailerService.sendMail({
+        from: 'MadHouse Events <4tlifee@gmail.com>',
+        to: contact.email,
+        subject: 'Confirm your subscription to MadHouse',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
+            <h2 style="color: #EB8014;">Confirm Your Subscription</h2>
+            <p style="color: #333; line-height: 1.5;">
+              Before we send you any emails, we need to confirm your subscription.
+            </p>
+            <a href="${confirmUrl}" 
+              style="display:inline-block; background:#EB8014; color:white; 
+              padding:12px 24px; border-radius:6px; text-decoration:none; font-weight:bold;">
+              Confirm Subscription
+            </a>
+            <p style="margin-top:20px; color:#666; font-size:14px;">
+              If you did not subscribe to MadHouse Events, you can safely ignore this email.
+            </p>
+          </div>
+        `,
+      });
+    } catch (emailError) {
+      console.error('Failed to send confirmation email:', emailError);
+      throw new BadRequestException(
+        'Failed to send confirmation email. Please try again later.',
+      );
+    }
+
+    return {
+      success: true,
+      data: contact,
+      message:
+        'Subscription created. Please confirm your email to activate subscription.',
+    };
   }
 
   async confirmSubscription(token: string) {
