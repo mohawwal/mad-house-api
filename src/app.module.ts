@@ -9,8 +9,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ContactsModule } from './contacts/contacts.module';
-import { MailerModule } from '@nestjs-modules/mailer';
-import { JwtModule } from '@nestjs/jwt';
+
 @Module({
   imports: [
     AuthModule,
@@ -29,27 +28,8 @@ import { JwtModule } from '@nestjs/jwt';
         }
       },
     }),
-    JwtModule.register({
-      global: true,
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: process.env.JWT_EXPIRESIN },
-    }),
     ScheduleModule.forRoot(),
     ContactsModule,
-    MailerModule.forRoot({
-      transport: {
-        service: 'gmail',
-        port: 587,
-        secure: false,
-        auth: {
-          user: process.env.GMAIL_APP_USER,
-          pass: process.env.GMAIL_APP_PASSWORD,
-        },
-        tls: {
-          rejectUnauthorized: false,
-        },
-      },
-    }),
   ],
   controllers: [AppController],
   providers: [AppService, CloudinaryService],
