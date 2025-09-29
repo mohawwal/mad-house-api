@@ -32,9 +32,8 @@ import { MailerModule } from '@nestjs-modules/mailer';
           user: process.env.GMAIL_APP_USER,
           pass: process.env.GMAIL_APP_PASSWORD,
         },
-        tls: {
-          rejectUnauthorized: false,
-        },
+        logger: true,
+        debug: true,
       },
     }),
     MulterModule.register({
