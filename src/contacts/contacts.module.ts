@@ -2,11 +2,10 @@ import { Module } from '@nestjs/common';
 import { ContactsService } from './contacts.service';
 import { ContactsController } from './contacts.controller';
 import { DatabaseModule } from 'src/database/database.module';
-
-import { ConfigModule } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
-  imports: [ConfigModule, DatabaseModule],
+  imports: [DatabaseModule, JwtModule],
   controllers: [ContactsController],
   providers: [ContactsService],
 })
