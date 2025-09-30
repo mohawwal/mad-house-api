@@ -6,9 +6,8 @@ import {
 } from '@nestjs/common';
 import { Prisma, Contact } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
+import { MailerService } from '@nestjs-modules/mailer';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { Resend } from 'resend';
 
 interface ConfirmTokenPayload {
   contactId: number;
@@ -18,15 +17,11 @@ interface ConfirmTokenPayload {
 
 @Injectable()
 export class ContactsService {
-  private resend: Resend;
-
   constructor(
     private readonly databaseService: DatabaseService,
+    private readonly mailerService: MailerService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
-  ) {
-    this.resend = new Resend(this.configService.get<string>('RESEND_API_KEY'));
-  }
+  ) {}
 
   async create(
     createContactDto: Prisma.ContactCreateInput,
@@ -50,21 +45,20 @@ export class ContactsService {
       throw new BadRequestException('Failed to create contact');
     }
 
-    const jwtSecret = this.configService.get<string>('JWT_SECRET');
     const token = this.jwtService.sign(
       { contactId: contact.id },
       {
-        secret: jwtSecret,
+        secret: process.env.JWT_SECRET,
         expiresIn: '24h',
       },
     );
 
-    const baseUrl = this.configService.get<string>('APP_URL');
+    const baseUrl = process.env.APP_URL;
     const confirmUrl = `${baseUrl}/contacts/confirm?token=${token}`;
 
     try {
-      await this.resend.emails.send({
-        from: 'MadHouse Events <onboarding@resend.dev>',
+      await this.mailerService.sendMail({
+        from: 'MadHouse Events <4tlifee@gmail.com>',
         to: contact.email,
         subject: 'Confirm your subscription to MadHouse',
         html: `
@@ -101,10 +95,7 @@ export class ContactsService {
 
   async confirmSubscription(token: string) {
     try {
-      const jwtSecret = this.configService.get<string>('JWT_SECRET');
-      const payload = this.jwtService.verify<ConfirmTokenPayload>(token, {
-        secret: jwtSecret,
-      });
+      const payload = this.jwtService.verify<ConfirmTokenPayload>(token);
 
       const contact = await this.databaseService.contact.update({
         where: { id: payload.contactId },
@@ -233,9 +224,8 @@ export class ContactsService {
             .replace(/{{lastname}}/g, contact.lastname || '')
             .replace(/{{email}}/g, contact.email);
 
-          // Use Resend for bulk emails too
-          await this.resend.emails.send({
-            from: 'MadHouse Events <onboarding@resend.dev>',
+          await this.mailerService.sendMail({
+            from: 'MadHouse Events <4tlifee@gmail.com>',
             to: contact.email,
             subject,
             html: personalizedContent,
@@ -252,6 +242,11 @@ export class ContactsService {
       });
 
       await Promise.allSettled(emailPromises);
+
+      // delay between batches
+      // if (batch < totalBatches - 1) {
+      //   await new Promise((resolve) => setTimeout(resolve, 1000));
+      // }
     }
 
     return {
