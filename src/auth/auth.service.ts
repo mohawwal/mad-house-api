@@ -110,7 +110,7 @@ export class AuthService {
 
     try {
       await this.resend.emails.send({
-        from: 'MadHouse Admin <4tlifee@gmail.com>',
+        from: 'MadHouse Admin <onboarding@resend.dev>',
         to: email,
         subject: 'MadHouse Admin - Password Reset OTP',
         html: `

@@ -64,7 +64,7 @@ export class ContactsService {
 
     try {
       await this.resend.emails.send({
-        from: 'MadHouse Events <4tlifee@gmail.com>',
+        from: 'MadHouse Events <onboarding@resend.dev>',
         to: contact.email,
         subject: 'Confirm your subscription to MadHouse',
         html: `
