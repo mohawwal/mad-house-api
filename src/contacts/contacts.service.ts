@@ -47,7 +47,10 @@ export class ContactsService {
 
     const token = this.jwtService.sign(
       { contactId: contact.id },
-      { expiresIn: '24h' },
+      {
+        secret: process.env.JWT_SECRET,
+        expiresIn: '24h',
+      },
     );
 
     const baseUrl = process.env.APP_URL;

@@ -11,7 +11,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ContactsModule } from './contacts/contacts.module';
 import { JwtModule } from '@nestjs/jwt';
 import { MailerModule } from '@nestjs-modules/mailer';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -23,23 +23,34 @@ import { ConfigModule } from '@nestjs/config';
     DatabaseModule,
     EventsModule,
     CloudinaryModule,
-    JwtModule.register({
+    JwtModule.registerAsync({
       global: true,
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: process.env.JWT_EXPIRESIN },
-    }),
-    MailerModule.forRoot({
-      transport: {
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
-        auth: {
-          user: process.env.GMAIL_APP_USER,
-          pass: process.env.GMAIL_APP_PASSWORD,
-        },
-        logger: true,
-        debug: true,
+      useFactory: (configService: ConfigService) => {
+        const secret = configService.get<string>('JWT_SECRET');
+        const expiresIn = configService.get<string>('JWT_EXPIRESIN');
+
+        return {
+          secret: secret,
+          signOptions: { expiresIn: expiresIn || '1h' },
+        };
       },
+      inject: [ConfigService],
+    }),
+    MailerModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        transport: {
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false,
+          auth: {
+            user: configService.get<string>('GMAIL_APP_USER'),
+            pass: configService.get<string>('GMAIL_APP_PASSWORD'),
+          },
+          logger: false,
+          debug: false,
+        },
+      }),
+      inject: [ConfigService],
     }),
     MulterModule.register({
       limits: {
@@ -59,14 +70,4 @@ import { ConfigModule } from '@nestjs/config';
   controllers: [AppController],
   providers: [AppService, CloudinaryService],
 })
-export class AppModule {
-  constructor() {
-    console.log('=== MAILER CONFIG DEBUG ===');
-    console.log('GMAIL_APP_USER:', process.env.GMAIL_APP_USER);
-    console.log('GMAIL_APP_PASSWORD exists:', !!process.env.GMAIL_APP_PASSWORD);
-    console.log(
-      'GMAIL_APP_PASSWORD length:',
-      process.env.GMAIL_APP_PASSWORD?.length,
-    );
-  }
-}
+export class AppModule {}
