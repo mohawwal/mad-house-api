@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { Prisma, Contact } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
-import { MailerService } from '@nestjs-modules/mailer';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
@@ -23,7 +22,6 @@ export class ContactsService {
 
   constructor(
     private readonly databaseService: DatabaseService,
-    private readonly mailerService: MailerService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {
