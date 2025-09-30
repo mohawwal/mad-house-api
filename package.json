@@ -21,11 +21,11 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@nestjs/cli": "^11.0.10",
     "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^11.1.0",
     "@fastify/helmet": "^13.0.1",
     "@nestjs-modules/mailer": "^2.0.2",
+    "@nestjs/cli": "^11.0.10",
     "@nestjs/common": "^11.1.6",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.6",
@@ -58,6 +58,7 @@
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.2.2",
+    "resend": "^6.1.1",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
     "tsconfig-paths": "^4.2.0"

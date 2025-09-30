@@ -10,7 +10,6 @@ import { MulterModule } from '@nestjs/platform-express';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ContactsModule } from './contacts/contacts.module';
 import { JwtModule } from '@nestjs/jwt';
-import { MailerModule } from '@nestjs-modules/mailer';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
@@ -34,22 +33,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
           signOptions: { expiresIn: expiresIn || '1h' },
         };
       },
-      inject: [ConfigService],
-    }),
-    MailerModule.forRootAsync({
-      useFactory: (configService: ConfigService) => ({
-        transport: {
-          host: 'smtp.gmail.com',
-          port: 587,
-          secure: false,
-          auth: {
-            user: configService.get<string>('GMAIL_APP_USER'),
-            pass: configService.get<string>('GMAIL_APP_PASSWORD'),
-          },
-          logger: false,
-          debug: false,
-        },
-      }),
       inject: [ConfigService],
     }),
     MulterModule.register({

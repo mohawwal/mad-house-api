@@ -10,18 +10,23 @@ import { DatabaseService } from 'src/database/database.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { generateOTP } from './auth.helper';
-import { MailerService } from '@nestjs-modules/mailer';
+import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import sendToken from './sendToken';
 import { RefreshTokenPayload } from './user.decorator';
+import { Resend } from 'resend';
 
 @Injectable()
 export class AuthService {
+  private resend: Resend;
+
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly jwtService: JwtService,
-    private readonly mailerService: MailerService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    this.resend = new Resend(this.configService.get<string>('RESEND_API_KEY'));
+  }
 
   async signUp(
     createAuthDto: Prisma.superUserCreateInput,
@@ -59,7 +64,6 @@ export class AuthService {
     };
   }
 
-  // Login
   async login(
     email: string,
     password: string,
@@ -82,7 +86,6 @@ export class AuthService {
     sendToken(user, 200, response, this.jwtService, 'Login successful');
   }
 
-  // Get OTP
   async getOtp(
     email: string,
   ): Promise<{ success: boolean; message: string; email: string }> {
@@ -106,7 +109,7 @@ export class AuthService {
     });
 
     try {
-      await this.mailerService.sendMail({
+      await this.resend.emails.send({
         from: 'MadHouse Admin <4tlifee@gmail.com>',
         to: email,
         subject: 'MadHouse Admin - Password Reset OTP',
@@ -144,7 +147,6 @@ export class AuthService {
     }
   }
 
-  // Verify OTP
   async verifyOtp(
     email: string,
     otp: string,
@@ -195,7 +197,6 @@ export class AuthService {
     };
   }
 
-  // Reset password
   async resetPassword(
     email: string,
     otp: string,
@@ -251,7 +252,6 @@ export class AuthService {
     };
   }
 
-  // Logout
   logout(response: Response): { success: boolean; message: string } {
     console.log('Logout request received');
 
@@ -268,7 +268,6 @@ export class AuthService {
     };
   }
 
-  //me
   async getCurrentUser(id: number) {
     const user = await this.databaseService.superUser.findUnique({
       where: { id },
@@ -286,7 +285,6 @@ export class AuthService {
     };
   }
 
-  //Refresh Token
   async refreshToken(refreshToken: string, response: Response): Promise<void> {
     try {
       const payload = await this.jwtService.verifyAsync<RefreshTokenPayload>(
