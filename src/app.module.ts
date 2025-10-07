@@ -15,7 +15,9 @@ import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     AuthModule,
     DatabaseModule,
     EventsModule,
