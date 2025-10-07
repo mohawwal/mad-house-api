@@ -19,8 +19,8 @@ interface ConfirmTokenPayload {
 export class ContactsService {
   constructor(
     private readonly databaseService: DatabaseService,
-    private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
+    private readonly jwtService: JwtService,
   ) {}
 
   async create(
@@ -58,7 +58,7 @@ export class ContactsService {
 
     try {
       await this.emailService.sendEmail({
-        recipients: contact.email,
+        to: contact.email,
         subject: 'Confirm your subscription to MadHouse',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
@@ -224,7 +224,7 @@ export class ContactsService {
             .replace(/{{email}}/g, contact.email);
 
           await this.emailService.sendEmail({
-            recipients: contact.email,
+            to: contact.email,
             subject,
             html: personalizedContent,
           });
@@ -242,9 +242,9 @@ export class ContactsService {
       await Promise.allSettled(emailPromises);
 
       // delay between batches
-      if (batch < totalBatches - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
+      // if (batch < totalBatches - 1) {
+      //   await new Promise((resolve) => setTimeout(resolve, 1000));
+      // }
     }
 
     return {

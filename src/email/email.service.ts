@@ -20,13 +20,13 @@ export class EmailService {
   }
 
   async sendEmail(dto: sendEmailDto) {
-    const { recipients, subject, html } = dto;
+    const { to, subject, html } = dto;
 
     const transport = this.emailTransport();
 
     const options: nodemailer.SendMailOptions = {
       from: this.configService.get<string>('GMAIL_APP_USER'),
-      to: recipients,
+      to: to,
       subject: subject,
       html: html,
     };
