@@ -10,17 +10,17 @@ import { DatabaseService } from 'src/database/database.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { generateOTP } from './auth.helper';
-import { MailerService } from '@nestjs-modules/mailer';
 import { Response } from 'express';
 import sendToken from './sendToken';
 import { RefreshTokenPayload } from './user.decorator';
+import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly jwtService: JwtService,
-    private readonly mailerService: MailerService,
+    private readonly emailService: EmailService,
   ) {}
 
   async signUp(
@@ -106,8 +106,7 @@ export class AuthService {
     });
 
     try {
-      await this.mailerService.sendMail({
-        from: 'MadHouse Admin <4tlifee@gmail.com>',
+      await this.emailService.sendEmail({
         to: email,
         subject: 'MadHouse Admin - Password Reset OTP',
         html: `
