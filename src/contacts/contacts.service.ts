@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { Prisma, Contact } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
-import { MailerService } from '@nestjs-modules/mailer';
 import { JwtService } from '@nestjs/jwt';
+import { EmailService } from 'src/email/email.service';
 
 interface ConfirmTokenPayload {
   contactId: number;
@@ -19,8 +19,8 @@ interface ConfirmTokenPayload {
 export class ContactsService {
   constructor(
     private readonly databaseService: DatabaseService,
-    private readonly mailerService: MailerService,
     private readonly jwtService: JwtService,
+    private readonly emailService: EmailService,
   ) {}
 
   async create(
@@ -57,9 +57,8 @@ export class ContactsService {
     const confirmUrl = `${baseUrl}/contacts/confirm?token=${token}`;
 
     try {
-      await this.mailerService.sendMail({
-        from: 'MadHouse Events <4tlifee@gmail.com>',
-        to: contact.email,
+      await this.emailService.sendEmail({
+        recipients: contact.email,
         subject: 'Confirm your subscription to MadHouse',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
@@ -224,9 +223,8 @@ export class ContactsService {
             .replace(/{{lastname}}/g, contact.lastname || '')
             .replace(/{{email}}/g, contact.email);
 
-          await this.mailerService.sendMail({
-            from: 'MadHouse Events <4tlifee@gmail.com>',
-            to: contact.email,
+          await this.emailService.sendEmail({
+            recipients: contact.email,
             subject,
             html: personalizedContent,
           });
@@ -244,9 +242,9 @@ export class ContactsService {
       await Promise.allSettled(emailPromises);
 
       // delay between batches
-      // if (batch < totalBatches - 1) {
-      //   await new Promise((resolve) => setTimeout(resolve, 1000));
-      // }
+      if (batch < totalBatches - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
     }
 
     return {

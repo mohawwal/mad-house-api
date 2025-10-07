@@ -10,15 +10,12 @@ import { MulterModule } from '@nestjs/platform-express';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ContactsModule } from './contacts/contacts.module';
 import { JwtModule } from '@nestjs/jwt';
-import { MailerModule } from '@nestjs-modules/mailer';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: '.env',
-    }),
+    ConfigModule.forRoot(),
     AuthModule,
     DatabaseModule,
     EventsModule,
@@ -36,22 +33,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       },
       inject: [ConfigService],
     }),
-    MailerModule.forRootAsync({
-      useFactory: (configService: ConfigService) => ({
-        transport: {
-          host: 'smtp.gmail.com',
-          port: 587,
-          secure: false,
-          auth: {
-            user: configService.get<string>('GMAIL_APP_USER'),
-            pass: configService.get<string>('GMAIL_APP_PASSWORD'),
-          },
-          logger: true,
-          debug: true,
-        },
-      }),
-      inject: [ConfigService],
-    }),
     MulterModule.register({
       limits: {
         fileSize: 5 * 1024 * 1024,
@@ -66,6 +47,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     }),
     ScheduleModule.forRoot(),
     ContactsModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [AppService, CloudinaryService],
