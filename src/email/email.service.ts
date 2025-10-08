@@ -6,26 +6,27 @@ import { sendEmailDto } from 'src/email/dto/email.dto';
 @Injectable()
 export class EmailService {
   constructor(private readonly configService: ConfigService) {}
-  emailTransport() {
-    const host = this.configService.get<string>('GMAIL_HOST');
-    const port = this.configService.get<number>('GMAIL_PORT');
 
-    console.log('📧 Email Configuration:', {
+  private emailTransport() {
+    const host =
+      this.configService.get<string>('GMAIL_HOST') || 'smtp.gmail.com';
+    const port = Number(this.configService.get<number>('GMAIL_PORT'));
+    const secure = port === 465;
+
+    console.log('Email Config:', { host, port, secure });
+
+    return nodemailer.createTransport({
       host,
       port,
-      secure: port === 465,
-    });
-
-    const transporter = nodemailer.createTransport({
-      host: this.configService.get<string>('GMAIL_HOST'),
-      port: this.configService.get<number>('GMAIL_PORT'),
-      secure: true,
+      secure,
       auth: {
         user: this.configService.get<string>('GMAIL_APP_USER'),
         pass: this.configService.get<string>('GMAIL_APP_PASSWORD'),
       },
+      tls: {
+        rejectUnauthorized: false,
+      },
     });
-    return transporter;
   }
 
   async sendEmail(dto: sendEmailDto) {
@@ -35,16 +36,18 @@ export class EmailService {
 
     const options: nodemailer.SendMailOptions = {
       from: this.configService.get<string>('GMAIL_APP_USER'),
-      to: to,
-      subject: subject,
-      html: html,
+      to,
+      subject,
+      html,
     };
+
     try {
       const result = await transport.sendMail(options);
       console.log('✅ Email sent successfully:', result.messageId);
       return result;
     } catch (err) {
-      console.log(err);
+      console.error('❌ Email send failed:', err);
+      throw err;
     }
   }
 }
