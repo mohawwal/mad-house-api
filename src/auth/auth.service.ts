@@ -14,6 +14,7 @@ import { Response } from 'express';
 import sendToken from './sendToken';
 import { RefreshTokenPayload } from './user.decorator';
 import { EmailService } from 'src/email/email.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +22,7 @@ export class AuthService {
     private readonly databaseService: DatabaseService,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
+    private readonly configService: ConfigService,
   ) {}
 
   async signUp(
@@ -254,10 +256,13 @@ export class AuthService {
   logout(response: Response): { success: boolean; message: string } {
     console.log('Logout request received');
 
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production';
+
     response.cookie('token', '', {
       expires: new Date(0),
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isProduction,
       path: '/',
     });
 
@@ -291,7 +296,7 @@ export class AuthService {
       const payload = await this.jwtService.verifyAsync<RefreshTokenPayload>(
         refreshToken,
         {
-          secret: process.env.JWT_REFRESH_SECRET,
+          secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
         },
       );
 

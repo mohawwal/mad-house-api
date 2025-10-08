@@ -22,7 +22,7 @@ export class ContactsService {
     private readonly databaseService: DatabaseService,
     private readonly emailService: EmailService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private readonly configSevice: ConfigService,
   ) {}
 
   async create(
@@ -37,7 +37,6 @@ export class ContactsService {
     }
 
     let contact: Contact;
-    let isResubscription = false;
 
     if (existingContact && existingContact.status === 'INACTIVE') {
       contact = await this.databaseService.contact.update({
@@ -49,7 +48,6 @@ export class ContactsService {
           status: 'INACTIVE',
         },
       });
-      isResubscription = true;
     } else {
       contact = await this.databaseService.contact.create({
         data: {
@@ -68,18 +66,18 @@ export class ContactsService {
     const token = this.jwtService.sign(
       { contactId: contact.id },
       {
-        secret: this.configService.get<string>('JWT_SECRET'),
+        secret: this.configSevice.get<string>('JWT_SECRET'),
         expiresIn: '24h',
       },
     );
 
-    const baseUrl = this.configService.get<string>('APP_URL');
+    const baseUrl = this.configSevice.get<string>('APP_URL');
     const confirmUrl = `${baseUrl}/contacts/confirm?token=${token}`;
 
     try {
       await this.emailService.sendEmail({
         to: contact.email,
-        subject: 'Confirm your subscription to MadHouse.',
+        subject: 'Confirm your subscription to MadHouse',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
             <h2 style="color: #EB8014;">Confirm Your Subscription</h2>
@@ -104,21 +102,18 @@ export class ContactsService {
       );
     }
 
-    const message = isResubscription
-      ? 'Confirmation email resent. Please confirm your email to reactivate subscription.'
-      : 'Subscription created. Please confirm your email to activate subscription.';
-
     return {
       success: true,
       data: contact,
-      message,
+      message:
+        'Subscription created. Please confirm your email to activate subscription.',
     };
   }
 
   async confirmSubscription(token: string) {
     try {
       const payload = this.jwtService.verify<ConfirmTokenPayload>(token, {
-        secret: this.configService.get<string>('JWT_SECRET'),
+        secret: this.configSevice.get<string>('JWT_SECRET'),
       });
 
       const contact = await this.databaseService.contact.update({
@@ -266,7 +261,7 @@ export class ContactsService {
 
       await Promise.allSettled(emailPromises);
 
-      // Optional: Add delay between batches to avoid rate limiting
+      // delay between batches
       // if (batch < totalBatches - 1) {
       //   await new Promise((resolve) => setTimeout(resolve, 1000));
       // }
