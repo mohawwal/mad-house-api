@@ -30,16 +30,31 @@ export class ContactsService {
       where: { email: createContactDto.email.toLowerCase() },
     });
 
-    if (existingContact) {
+    if (existingContact && existingContact.status === 'ACTIVE') {
       throw new ConflictException('Email is already subscribed to our events');
     }
 
-    const contact = await this.databaseService.contact.create({
-      data: {
-        ...createContactDto,
-        email: createContactDto.email.toLowerCase(),
-      },
-    });
+    let contact: Contact;
+
+    if (existingContact && existingContact.status === 'INACTIVE') {
+      await this.databaseService.contact.update({
+        where: { email: existingContact.email },
+        data: {
+          ...createContactDto,
+          email: createContactDto.email.toLocaleLowerCase(),
+          firstname: createContactDto.firstname,
+          lastname: createContactDto.lastname,
+          status: 'INACTIVE',
+        },
+      });
+    } else {
+      await this.databaseService.contact.create({
+        data: {
+          ...createContactDto,
+          email: createContactDto.email.toLowerCase(),
+        },
+      });
+    }
 
     if (!contact) {
       throw new BadRequestException('Failed to create contact');
@@ -94,7 +109,9 @@ export class ContactsService {
 
   async confirmSubscription(token: string) {
     try {
-      const payload = this.jwtService.verify<ConfirmTokenPayload>(token);
+      const payload = this.jwtService.verify<ConfirmTokenPayload>(token, {
+        secret: process.env.JWT_SECRET,
+      });
 
       const contact = await this.databaseService.contact.update({
         where: { id: payload.contactId },
