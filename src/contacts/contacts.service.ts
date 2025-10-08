@@ -79,7 +79,7 @@ export class ContactsService {
     try {
       await this.emailService.sendEmail({
         to: contact.email,
-        subject: 'Confirm your subscription to MadHouse',
+        subject: 'Confirm your subscription to MadHouse.',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
             <h2 style="color: #EB8014;">Confirm Your Subscription</h2>
