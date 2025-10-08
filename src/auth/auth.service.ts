@@ -272,7 +272,7 @@ export class AuthService {
     };
   }
 
-  //me
+  //me.
   async getCurrentUser(id: number) {
     const user = await this.databaseService.superUser.findUnique({
       where: { id },
