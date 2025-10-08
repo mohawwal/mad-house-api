@@ -12,5 +12,5 @@ export class EmailController {
   //     success: true,
   //     message: 'Email sent successfully',
   //   };
-  // }
+  // };
 }
