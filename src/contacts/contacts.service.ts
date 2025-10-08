@@ -8,6 +8,7 @@ import { Prisma, Contact } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { JwtService } from '@nestjs/jwt';
 import { EmailService } from 'src/email/email.service';
+import { ConfigService } from '@nestjs/config';
 
 interface ConfirmTokenPayload {
   contactId: number;
@@ -21,6 +22,7 @@ export class ContactsService {
     private readonly databaseService: DatabaseService,
     private readonly emailService: EmailService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async create(
@@ -35,23 +37,26 @@ export class ContactsService {
     }
 
     let contact: Contact;
+    let isResubscription = false;
 
     if (existingContact && existingContact.status === 'INACTIVE') {
-      await this.databaseService.contact.update({
-        where: { email: existingContact.email },
+      contact = await this.databaseService.contact.update({
+        where: { id: existingContact.id },
         data: {
-          ...createContactDto,
-          email: createContactDto.email.toLocaleLowerCase(),
+          email: createContactDto.email.toLowerCase(),
           firstname: createContactDto.firstname,
           lastname: createContactDto.lastname,
           status: 'INACTIVE',
         },
       });
+      isResubscription = true;
     } else {
-      await this.databaseService.contact.create({
+      contact = await this.databaseService.contact.create({
         data: {
-          ...createContactDto,
           email: createContactDto.email.toLowerCase(),
+          firstname: createContactDto.firstname,
+          lastname: createContactDto.lastname,
+          status: 'INACTIVE',
         },
       });
     }
@@ -63,12 +68,12 @@ export class ContactsService {
     const token = this.jwtService.sign(
       { contactId: contact.id },
       {
-        secret: process.env.JWT_SECRET,
+        secret: this.configService.get<string>('JWT_SECRET'),
         expiresIn: '24h',
       },
     );
 
-    const baseUrl = process.env.APP_URL;
+    const baseUrl = this.configService.get<string>('APP_URL');
     const confirmUrl = `${baseUrl}/contacts/confirm?token=${token}`;
 
     try {
@@ -99,18 +104,21 @@ export class ContactsService {
       );
     }
 
+    const message = isResubscription
+      ? 'Confirmation email resent. Please confirm your email to reactivate subscription.'
+      : 'Subscription created. Please confirm your email to activate subscription.';
+
     return {
       success: true,
       data: contact,
-      message:
-        'Subscription created. Please confirm your email to activate subscription.',
+      message,
     };
   }
 
   async confirmSubscription(token: string) {
     try {
       const payload = this.jwtService.verify<ConfirmTokenPayload>(token, {
-        secret: process.env.JWT_SECRET,
+        secret: this.configService.get<string>('JWT_SECRET'),
       });
 
       const contact = await this.databaseService.contact.update({
@@ -258,7 +266,7 @@ export class ContactsService {
 
       await Promise.allSettled(emailPromises);
 
-      // delay between batches
+      // Optional: Add delay between batches to avoid rate limiting
       // if (batch < totalBatches - 1) {
       //   await new Promise((resolve) => setTimeout(resolve, 1000));
       // }
