@@ -31,6 +31,31 @@ export class ContactsService {
     const existingContact = await this.databaseService.contact.findUnique({
       where: { email: createContactDto.email.toLowerCase() },
     });
+    if (existingContact && existingContact.status === 'ACTIVE') {
+      throw new ConflictException('Email is already subscribed to our events');
+    }
+    const contact = await this.databaseService.contact.create({
+      data: {
+        email: createContactDto.email.toLowerCase(),
+        firstname: createContactDto.firstname,
+        lastname: createContactDto.lastname,
+        status: 'INACTIVE',
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Contact created successfully',
+      data: contact,
+    };
+  }
+
+  async createMail(
+    createContactDto: Prisma.ContactCreateInput,
+  ): Promise<{ success: boolean; data: Contact; message: string }> {
+    const existingContact = await this.databaseService.contact.findUnique({
+      where: { email: createContactDto.email.toLowerCase() },
+    });
 
     if (existingContact && existingContact.status === 'ACTIVE') {
       throw new ConflictException('Email is already subscribed to our events');

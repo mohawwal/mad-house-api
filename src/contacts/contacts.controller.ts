@@ -26,6 +26,11 @@ export class ContactsController {
     return this.contactsService.create(createContactDto);
   }
 
+  @Post('email')
+  createMail(@Body() createContactDto: Prisma.ContactCreateInput) {
+    return this.contactsService.create(createContactDto);
+  }
+
   @Get('confirm')
   async confirmSubscription(
     @Query('token') token: string,
